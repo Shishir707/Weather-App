@@ -170,9 +170,20 @@ class _WeatherScreenState extends State<WeatherScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Weather App',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 28),
+            SizedBox(width: 8),
+            Text(
+              'Weather App',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
         backgroundColor: Colors.blue.shade200,
         centerTitle: true,
