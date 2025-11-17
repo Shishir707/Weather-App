@@ -288,7 +288,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      "Sunny conditions likely through today. wind up to ${_wKmph} km/h",
+                      "$_wText conditions expected today, with wind speeds reaching ${_wKmph} km/h.",
                     ),
                   ),
                 ),
