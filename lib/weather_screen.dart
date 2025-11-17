@@ -81,7 +81,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
       /// ------- Current Data ----------
       final tempC = (current['temperature_2m'] as num).toDouble();
       final windKph = (current['wind_speed_10m'] as num).toDouble();
-      final wCode = (current['weather_code'] as num).toDouble();
+      final wCode = (current['weather_code'] as num).toInt();
 
       ///-------Hourly Data---------
       final hourly = deData['hourly'] as Map<String, dynamic>;
@@ -90,7 +90,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
       final hCode = List<num>.from(hourly['weather_code'] as List);
 
       final outHourly = <_Hourly>[];
-      for (var i = 0; i < hourly.length; i++) {
+      for (var i = 0; i < hTimes.length; i++) {
         outHourly.add(
           _Hourly(
             DateTime.parse(hTimes[i]),
@@ -99,10 +99,21 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ),
         );
       }
+
+      setState(() {
+        _resolvedCity = getGeoData.city;
+        _tempc = tempC;
+        _wCode = wCode;
+        _wText = _codeToText(wCode);
+        _wKmph = windKph;
+        _hourlies = outHourly;
+      });
     } catch (e) {
       throw Exception(e.toString());
     } finally {
-      setState(() {});
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
@@ -185,8 +196,130 @@ class _WeatherScreenState extends State<WeatherScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.blue.shade200,
+        backgroundColor: Colors.blue,
         centerTitle: true,
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => _fetch(_searchCtr.text),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blue, Colors.blueAccent, Colors.white70],
+            ),
+          ),
+          child: ListView(
+            children: [
+              SizedBox(height: 15),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      controller: _searchCtr,
+                      onSubmitted: (v) => _fetch(v),
+                      decoration: InputDecoration(
+                        labelText: 'Enter City (e.g..Dhaka)',
+                        labelStyle: TextStyle(color: Colors.white),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white),
+                        ),
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  FilledButton(
+                    onPressed: _loading ? null : () => _fetch(_searchCtr.text),
+                    child: Icon(Icons.search, color: Colors.white),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              if (_loading) const LinearProgressIndicator(),
+              if (_error != null)
+                Text(_error!, style: TextStyle(color: Colors.red)),
+              SizedBox(height: 10),
+              Column(
+                children: [
+                  Text(
+                    'MY LOCATION',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    (_resolvedCity ?? 'Bangladesh'),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              if (_tempc != null) ...[
+                Center(
+                  child: Text(
+                    "${_tempc?.toStringAsFixed(0)} °C",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 96,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+              if (_wKmph != null)
+                Card(
+                  elevation: 0,
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      "Sunny conditions likely through today. wind up to ${_wKmph} km/h",
+                    ),
+                  ),
+                ),
+              SizedBox(height: 10),
+              if (_hourlies.isNotEmpty)
+                Card(
+                  color: Colors.white,
+                  child: SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _hourlies.length,
+                      itemBuilder: (context, index) => SizedBox(width: 12),
+                      separatorBuilder: (context, index) {
+                        final h = _hourlies[index];
+                        final label = index == 0 ? "Now" : h.t.hour.toString();
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(label),
+                            Icon(_codeToIcon(h.code)),
+                            Text("${h.temp.toStringAsFixed(0)} °C"),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
