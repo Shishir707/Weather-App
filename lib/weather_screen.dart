@@ -218,7 +218,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue[300],
         centerTitle: true,
       ),
       body: RefreshIndicator(
