@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -21,8 +22,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
   double? _wKmph;
   int? _wCode;
   String? _wText;
-
-  double? _hi, _lo;
 
   List<_Hourly> _hourlies = [];
   List<_Daily> _dailies = [];
@@ -69,7 +68,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
         "?latitude=${getGeoData.lat}&longitude=${getGeoData.lon}&"
         "daily=temperature_2m_max,temperature_2m_min,sunset,sunrise&hourly="
         "temperature_2m,weather_code,wind_speed_10m&current=temperature_2m,"
-        "weather_code,wind_speed_10m&timezone=auto",
+        "weather_code,wind_speed_10m&&forecast_days=10&timezone=auto",
       );
       final response = await get(url);
       print("Weather Data: ${response.body}");
@@ -206,14 +205,14 @@ class _WeatherScreenState extends State<WeatherScreen> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 28),
+            Icon(Icons.wb_sunny_rounded, color: Colors.yellow, size: 28),
             SizedBox(width: 8),
             Text(
               'Weather App',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: Colors.yellow,
               ),
             ),
           ],
@@ -370,7 +369,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                       color: Colors.white.withOpacity(0.5),
                     ),
                     Text(
-                      '07-DAY FORECAST',
+                      '10-DAY FORECAST',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
                         fontWeight: FontWeight.bold,
@@ -381,51 +380,57 @@ class _WeatherScreenState extends State<WeatherScreen> {
               if (_dailies.isNotEmpty)
                 Card(
                   color: Colors.lightBlue.withOpacity(0.6),
-                  child: SizedBox(
-                    height: 250,
-                    child: ListView.separated(
-                      itemCount: _dailies.length,
-                      itemBuilder: (context, index) => SizedBox(height: 15),
-                      separatorBuilder: (context, index) {
-                        final d = _dailies[index];
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          spacing: 10,
-                          children: [
-                            SizedBox(width: 5),
-                            Text(
-                              DateFormat('EEE').format(d.date),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: _dailies.length,
+                    itemBuilder: (context, index) => SizedBox(height: 15),
+                    separatorBuilder: (context, index) {
+                      final d = _dailies[index];
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: 10,
+                        children: [
+                          SizedBox(width: 5),
+                          Text(
+                            DateFormat('EEE').format(d.date),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                            SizedBox(width: 5),
-                            Icon(Icons.sunny, color: Colors.yellow),
-                            SizedBox(width: 5),
-                            Text(
-                              "${d.tMax}°",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white.withOpacity(0.7),
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ),
+                          SizedBox(width: 5),
+                          Icon(Icons.sunny, color: Colors.yellow),
+                          SizedBox(width: 5),
+                          Text(
+                            "${d.tMax}°",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white.withOpacity(0.7),
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text('=================='),
-                            SizedBox(width: 5),
-                            Text(
-                              "${d.tMin}°",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                          ),
+                          LinearPercentIndicator(
+                            width: 120.0,
+                            lineHeight: 8.0,
+                            barRadius: Radius.circular(5),
+                            percent: (d.tMax + d.tMin) / 100,
+                            backgroundColor: Colors.white,
+                            progressColor: Colors.yellow,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            "${d.tMin}°",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
-                          ],
-                        );
-                      },
-                    ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
             ],
