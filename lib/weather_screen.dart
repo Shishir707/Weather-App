@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:intl/intl.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -100,6 +101,26 @@ class _WeatherScreenState extends State<WeatherScreen> {
         );
       }
 
+      ///--------Daily Data ---------------
+      final daily = deData['daily'] as Map<String, dynamic>;
+      final dateTime = List<String>.from(daily['time'] as List);
+      final hi = List<num>.from(daily['temperature_2m_max'] as List);
+      final lo = List<num>.from(daily['temperature_2m_min'] as List);
+
+      final outDaily = <_Daily>[];
+      for (var i = 0; i < dateTime.length; i++) {
+        outDaily.add(
+          _Daily(
+            DateTime.parse(dateTime[i]),
+            hi[i].toDouble(),
+            lo[i].toDouble(),
+          ),
+        );
+      }
+
+      print('Daily Data: ${outDaily.length}');
+      print(outDaily.map((d) => "${d.date} | ${d.tMax}/${d.tMin}").toList());
+
       setState(() {
         _resolvedCity = getGeoData.city;
         _tempc = tempC;
@@ -107,6 +128,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
         _wText = _codeToText(wCode);
         _wKmph = windKph;
         _hourlies = outHourly;
+        _dailies = outDaily;
       });
     } catch (e) {
       throw Exception(e.toString());
@@ -206,7 +228,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.blue, Colors.blueAccent, Colors.white70],
+              colors: [Colors.blue, Colors.blueAccent.shade100, Colors.white],
             ),
           ),
           child: ListView(
@@ -239,8 +261,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   ),
                   SizedBox(width: 10),
                   FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                    ),
                     onPressed: _loading ? null : () => _fetch(_searchCtr.text),
-                    child: Icon(Icons.search, color: Colors.white),
+                    child: Icon(Icons.search, color: Colors.black, size: 22),
                   ),
                 ],
               ),
@@ -294,6 +320,23 @@ class _WeatherScreenState extends State<WeatherScreen> {
                 ),
               SizedBox(height: 10),
               if (_hourlies.isNotEmpty)
+                Row(
+                  children: [
+                    SizedBox(width: 10),
+                    Icon(
+                      Icons.access_time,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                    Text(
+                      'HOURLY FORECAST',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              if (_hourlies.isNotEmpty)
                 Card(
                   color: Colors.white,
                   child: SizedBox(
@@ -311,6 +354,74 @@ class _WeatherScreenState extends State<WeatherScreen> {
                             Text(label),
                             Icon(_codeToIcon(h.code)),
                             Text("${h.temp.toStringAsFixed(0)} °C"),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              SizedBox(height: 20),
+              if (_dailies.isNotEmpty)
+                Row(
+                  children: [
+                    SizedBox(width: 10),
+                    Icon(
+                      Icons.calendar_month,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                    Text(
+                      '07-DAY FORECAST',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              if (_dailies.isNotEmpty)
+                Card(
+                  color: Colors.lightBlue.withOpacity(0.6),
+                  child: SizedBox(
+                    height: 250,
+                    child: ListView.separated(
+                      itemCount: _dailies.length,
+                      itemBuilder: (context, index) => SizedBox(height: 15),
+                      separatorBuilder: (context, index) {
+                        final d = _dailies[index];
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 10,
+                          children: [
+                            SizedBox(width: 5),
+                            Text(
+                              DateFormat('EEE').format(d.date),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 5),
+                            Icon(Icons.sunny, color: Colors.yellow),
+                            SizedBox(width: 5),
+                            Text(
+                              "${d.tMax}°",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white.withOpacity(0.7),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text('=================='),
+                            SizedBox(width: 5),
+                            Text(
+                              "${d.tMin}°",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                           ],
                         );
                       },
